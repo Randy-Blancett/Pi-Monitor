@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build_release:
+    name: build_release
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+    
+      - name: Set up multi JDK
+        uses: actions/setup-java@v2
+        with:
+         java-version: 16
+         distribution: 'adopt'
+         cache: maven        
+        
+      - name: Build with Maven
+        run: mvn -B clean package --file pom.xml 
+        
+      - name: version
+        run: echo "::set-output name=version::0.0.1"
+        id: version
+     
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          
+      - name: upload linux artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./target/OrangePiMonitorInstaller.bsx
+          asset_name: PiMonitorInstaller.bsx
+          asset_content_type: application/x-sh
