@@ -21,7 +21,7 @@ ZABBIX_OUTPUT_DIR=""
 #
 # Directory where to copy all the script files
 INSTALL_LOCATION="/monitor"
-SERVICE_FILE="/lib/systemd/system/orangePiMonitor.service"
+SERVICE_FILE="/lib/systemd/system/piMonitor.service"
 
 function loadRequirements()
 {
@@ -43,7 +43,7 @@ addVar2Dump "SERVICE_FILE"
 
 parseCmdLine "$@"
 varDump $DEBUG
-log "Installing Orange Pi Monitoring" "$STANDARD" "$TEXT_GREEN"
+log "Installing Pi Monitoring" "$STANDARD" "$TEXT_GREEN"
 log " Install Directory : $INSTALL_LOCATION" "$STANDARD" "$TEXT_GREEN"
 
 ensureRoot

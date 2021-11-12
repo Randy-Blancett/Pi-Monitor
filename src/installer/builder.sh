@@ -1,7 +1,7 @@
 #!/bin/bash
 cd ${project.build.directory}/installer
 
-FINAL_FILE="${project.build.directory}/OrangePiMonitorInstaller.bsx"
+FINAL_FILE="${project.build.directory}/PiMonitorInstaller.bsx"
 
 cat install.sh > "$FINAL_FILE"
 
