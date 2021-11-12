@@ -44,6 +44,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/OrangePiMonitorInstaller.bsx
+          asset_path: ./target/PiMonitorInstaller.bsx
           asset_name: PiMonitorInstaller.bsx
           asset_content_type: application/x-sh
