@@ -17,6 +17,7 @@ it will ask you where to save the zabbix file
 ### 1.1.0
 #### Features
 * Add ability to track Memory
+* Add ShellCheck to improve code quality
 #### Bugs
 
 ### 1.0.0

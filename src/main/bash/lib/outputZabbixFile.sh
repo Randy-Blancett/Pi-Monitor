@@ -2,19 +2,21 @@
 #FILE
 #AUTHOR Randy Blancett
 #AUTHOR_EMAIL Randy.Blancett@gmail.com
-#VERSION 0.0.1
-# This library is designed to gather and output data in Zabbix Format
+#VERSION 1.1.0
 #VERSIONS
-#V 0.0.1
+#V 1.1.0
+# Fix ShellCheck Issues
+#
+#V 1.0.0
 # Initial Release
 
 if [[ " ${LOADED_LIB[*]} " != *" outputZabbixFiles.sh "* ]]; then
     LOADED_LIB+=('outputZabbixFiles.sh')
     
     # Allow the library to parse command line options
-    source $LIB_PATH/cmdOptions.sh
+    source "$LIB_PATH/cmdOptions.sh"
     # Adds the base logging features
-    source $LIB_PATH/colorLogging.sh
+    source "$LIB_PATH/colorLogging.sh"
     
     #VARIABLE
 	#PROTECTED
@@ -32,8 +34,19 @@ if [[ " ${LOADED_LIB[*]} " != *" outputZabbixFiles.sh "* ]]; then
 	# This Method will write the cache to disk
 	function writeZabbixCache
 	{
-  		log "Saving Data to $OUTPUT_FILE" $INFO $TEXT_BLUE
-		echo -e -n $OUTPUT_CACHE >> $OUTPUT_FILE
+  		log "Saving Data to $OUTPUT_FILE" "$INFO" "$TEXT_BLUE"
+		echo -e -n "${OUTPUT_CACHE[@]}" >> "$OUTPUT_FILE"
+  		OUTPUT_CACHE=()
+	}	
+	
+	#METHOD
+	#PUBLIC
+	# This Method will print the zabbix data to screen 
+	# Mostly used for testing.
+	function printZabbixCache
+	{
+  		log "Printing Zabbix Cache" "$STANDARD" "$TEXT_BLUE"
+		echo -e -n "${OUTPUT_CACHE[@]}"
   		OUTPUT_CACHE=()
 	}	
 	
@@ -52,12 +65,12 @@ if [[ " ${LOADED_LIB[*]} " != *" outputZabbixFiles.sh "* ]]; then
 	{
 		log "Checking if we should run: $1" "$OMG" "$TEXT_BLUE" 	
 		[ 0 == "$2" ] && \
-			log "$1 check has been disabled" $DEBUG $TEXT_RED && \
+			log "$1 check has been disabled" "$DEBUG" "$TEXT_RED" && \
 			return 0
 			
-		log "Seeing if $3+$4 is Greater Than $5" "$OMG" "$TEXT_BLUE" 			
-		[ $(($3+$4)) -gt $5 ] && \
-			log "$1 check should not be run this time." $DEBUG $TEXT_BLUE && \
+		log "Seeing if $3+$4 is Greater Than [$5]" "$OMG" "$TEXT_BLUE" 			
+		[ $(($3+$4)) -gt "$5" ] && \
+			log "$1 check should not be run this time." "$DEBUG" "$TEXT_BLUE" && \
 			return 0
 			
 		return 1
@@ -73,6 +86,7 @@ if [[ " ${LOADED_LIB[*]} " != *" outputZabbixFiles.sh "* ]]; then
 	# $3 | Value | Value to be logged
 	function sendZabbixLine2Cache
 	{
+		# shellcheck disable=SC2179
 		OUTPUT_CACHE+="$HOSTNAME $2 $1 ${3}\\n"
 	}
 

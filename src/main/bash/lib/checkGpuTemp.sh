@@ -1,20 +1,23 @@
 #!/bin/bash
 #FILE
 # This will process GPU Temp
-#VERSION 0.0.1
+#VERSION 1.1.0
 #VERSIONS
-#V 0.0.1
+#V 1.1.0
+# Fix ShellCheck Issues
+#
+#V 1.0.0
 # Initial Split of code to handle Gpu Temp
 
 if [[ " ${LOADED_LIB[*]} " != *" checkGpuTemp.sh "* ]]; then
     LOADED_LIB+=('checkGpuTemp.sh')
      
     # Allow the library to parse command line options
-    source $LIB_PATH/cmdOptions.sh
+    source "$LIB_PATH/cmdOptions.sh"
     # Adds the base logging features
-    source $LIB_PATH/colorLogging.sh
+    source "$LIB_PATH/colorLogging.sh"
 	# Adds ability to output data in a zabbix file
-	source $LIB_PATH/outputZabbixFile.sh
+	source "$LIB_PATH/outputZabbixFile.sh"
 	
     #VARIABLE
     #PROTECTED
@@ -49,18 +52,20 @@ if [[ " ${LOADED_LIB[*]} " != *" checkGpuTemp.sh "* ]]; then
 	# $1 | Date | Date in seconds since epoc
 	function checkGpuTemp()
 	{
-		skipCheck "GPU Temp" $GPU_TEMP_ENABLED $GPU_TEMP_LAST_CHECK $GPU_TEMP_CYCLE $1 && \
+		skipCheck "GPU Temp" "$GPU_TEMP_ENABLED" "$GPU_TEMP_LAST_CHECK" "$GPU_TEMP_CYCLE" "$1" && \
 		return 0
 			
 		GPU_TEMP_LAST_CHECK=$1			
-		log "Checking GPU Temp" $TRACE
-		[ ! -r ${GPU_TEMP_FILE} ] && \
-			log "You can not read the GPU temp file so skiping it" $INFO $TEXT_RED && \
+		log "Checking GPU Temp" "$TRACE" "$TEXT_BLUE"
+		[ ! -r "${GPU_TEMP_FILE}" ] && \
+			log "You can not read the GPU temp file so skiping it" "$INFO" "$TEXT_RED" && \
 			return
 
-		local TEMP=$(cat ${GPU_TEMP_FILE})
-	  	local TEMP=$(printf '%.3f\n' $(echo "${TEMP}/1000" | bc -l))
-	  	sendZabbixLine2Cache $1 $KEY_GPU_TEMP $TEMP 
+		local TEMP=
+		TEMP=$(cat ${GPU_TEMP_FILE})
+		TEMP=$(echo "${TEMP}/1000" | bc -l)
+	  	TEMP=$(printf '%.3f\n' "$TEMP")
+	  	sendZabbixLine2Cache "$1" "$KEY_GPU_TEMP" "$TEMP" 
 	}
 	
 	#METHOD

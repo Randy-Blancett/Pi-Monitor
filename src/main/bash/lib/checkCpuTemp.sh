@@ -1,20 +1,25 @@
 #!/bin/bash
 #FILE
 # This will process Cpu Temp
-#VERSION 0.0.1
+#VERSION 1.1.0
 #VERSIONS
-#V 0.0.1
+#V 1.1.0
+# Fix ShellCheck Issues
+# Add Test code
+#
+#V 1.0.0
 # Initial Split of code to handle CPU Temp
 
 if [[ " ${LOADED_LIB[*]} " != *" checkCpuTemp.sh "* ]]; then
-    LOADED_LIB+=('checkCpuTemp.sh')
+    LOADED_LIB+=('checkCpuTemp.sh')    
+    [[ "${BASH_SOURCE[0]}" == "${0}" ]] && LIB_PATH="$( dirname "$0" )" && LIB_PATH=$(readlink -e "$LIB_PATH")
     
      # Allow the library to parse command line options
-    source $LIB_PATH/cmdOptions.sh
+    source "$LIB_PATH/cmdOptions.sh"
     # Adds the base logging features
-    source $LIB_PATH/colorLogging.sh
+    source "$LIB_PATH/colorLogging.sh"
 	# Adds ability to output data in a zabbix file
-	source $LIB_PATH/outputZabbixFile.sh
+	source "$LIB_PATH/outputZabbixFile.sh"
 	
 	#VARIABLE
     #PROTECTED
@@ -49,18 +54,19 @@ if [[ " ${LOADED_LIB[*]} " != *" checkCpuTemp.sh "* ]]; then
 	# $1 | Date | Date in seconds since epoc
 	function checkCpuTemp()
 	{
-		skipCheck "CPU Temp" $CPU_TEMP_ENABLED $CPU_TEMP_LAST_CHECK $CPU_TEMP_CYCLE $1 && \
+		skipCheck "CPU Temp" "$CPU_TEMP_ENABLED" "$CPU_TEMP_LAST_CHECK" "$CPU_TEMP_CYCLE" "$1" && \
 		return 0
 			
 		CPU_TEMP_LAST_CHECK=$1			
-		log "Checking CPU Temp" $TRACE
+		log "Checking CPU Temp" "$TRACE"
 		[ ! -r ${CPU_TEMP_FILE} ] && \
-			log "You can not read the cpu temp file so skiping it" $INFO $TEXT_RED && \
+			log "You can not read the cpu temp file so skiping it" "$INFO" "$TEXT_RED" && \
 			return
-
-		local TEMP=$(cat ${CPU_TEMP_FILE})
-	  	local TEMP=$(printf '%.3f\n' $(echo "${TEMP}/1000" | bc -l))
-	  	sendZabbixLine2Cache $1 $KEY_CPU_TEMP $TEMP 
+		local TEMP
+		TEMP=$(cat ${CPU_TEMP_FILE})
+		TEMP=$(echo "${TEMP}/1000" | bc -l)
+	  	TEMP=$(printf '%.3f\n' "$TEMP")
+	  	sendZabbixLine2Cache "$1" "$KEY_CPU_TEMP" "$TEMP" 
 	}
 	
 	#METHOD
@@ -98,4 +104,20 @@ if [[ " ${LOADED_LIB[*]} " != *" checkCpuTemp.sh "* ]]; then
 	addCommandLineArg "" "cpuTempCycle" true "This is the number of seconds to wait between checking CPU Temp Default: $CPU_TEMP_CYCLE"
 	
 	addCommandLineParser "optCheckCpuTemp"
+    
+    ##############################################################
+    # Testing Process                                            #
+    ##############################################################
+    
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
+    then
+     log "${BASH_SOURCE[0]} is being run directly, this is only intened for Testing" "$STANDARD" "$TEXT_BLUE"
+     parseCmdLine "$@"
+	 varDump "$DEBUG"
+	 DATE=$(date +"%d%B%Y_%H %s ")
+	 readarray -t -d " " DATE_ARRAY <<<"$DATE"
+  	 DATE=${DATE_ARRAY[1]}  	 
+     checkCpuTemp "$DATE"
+     printZabbixCache
+    fi
 fi
