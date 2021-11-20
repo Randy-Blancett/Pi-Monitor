@@ -40,26 +40,50 @@ if [[ " ${LOADED_LIB[*]} " != *" checkMemory.sh "* ]]; then
 	
 	#METHOD
 	#PUBLIC
+	# Process One line of the Memory Stats File
+	#
+	#PARAMETERS
+	# $1 | Date | Date in seconds since epoc
+	# $2 | Data | One Line of Data (Name:	Number kb)
+	# $2 | Output Array | Name Ref to to output Array
+	function processMemoryStatLine()
+	{
+		log "Processing [$2]" "$TRACE" "$TEXT_YELLOW"
+ 		local -n OUTPUT="$3"
+		local STAT_SPLIT
+ 		readarray -t -d " " STAT_SPLIT <<<"$2"
+ 		local NAME=${STAT_SPLIT[0]} 
+ 		local DATA 		
+ 		[ -z "${STAT_SPLIT[-2]}" ] && DATA=${STAT_SPLIT[-1]} || DATA=${STAT_SPLIT[-2]} 		
+ 		OUTPUT["${NAME::-1}"]="${DATA}"
+	}
+	
+	#METHOD
+	#PUBLIC
 	# Check Memroy Usage
 	#
 	#PARAMETERS
 	# $1 | Date | Date in seconds since epoc
+	#
+	#EXIT_CODES
+	# 1 | Check is Skipped
 	function checkMemoryUsage()
 	{
 		skipCheck "Memory Usage" "$MEMORY_ENABLED" "$MEMORY_LAST_CHECK" "$MEMORY_CYCLE" "$1" && \
-		return 0
+		return 1
 				
-		log "Reading from ${CPU_STATUS}" "$DEBUG" "$TEXT_YELLOW"
+		log "Reading from ${MEMORY_STAT_FILE}" "$DEBUG" "$TEXT_YELLOW"
 		
-		CPU_USAGE_LAST_CHECK=$1	
+		declare -A MEMORY_STATS
+		
+		MEMORY_LAST_CHECK=$1	
 		local CPU_LINES=();
 		local I=-1
-	  	while IFS= read -r CPU
-	  	do
-	  		((I+=1))
-	  		processSingleCpuData "$1" "${OLD_CPU_READINGS[${I}]}" "$CPU"
-	  		OLD_CPU_READINGS[${I}]="$CPU"
-	  	done < <(grep cpu "${BASE_CPU_USAGE_FILE}")
+	  	local STAT
+	  	while read -r STAT; do
+		  processMemoryStatLine "$1" "$STAT" MEMORY_STATS
+		done <"${MEMORY_STAT_FILE}"
+		for i in "${!MEMORY_STATS[@]}";do printf "%s=%s\n" "$i" "${MEMORY_STATS[$i]}";done
 	}
 	
 	#METHOD
@@ -104,6 +128,7 @@ if [[ " ${LOADED_LIB[*]} " != *" checkMemory.sh "* ]]; then
     then
      log "${BASH_SOURCE[0]} is being run directly, this is only intened for Testing" "$STANDARD" "$TEXT_BLUE"
      parseCmdLine "$@"
-	 varDump "$DEBUG"	 
+	 varDump "$DEBUG"	
+	 checkMemoryUsage "$(date +"%s")" 
     fi
  fi
