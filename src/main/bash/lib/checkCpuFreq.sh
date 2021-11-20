@@ -9,7 +9,7 @@
 if [[ " ${LOADED_LIB[*]} " != *" checkCpuFreq.sh "* ]]; then
     LOADED_LIB+=('checkCpufreq.sh')
     
-     # Allow the library to parse command line options
+    # Allow the library to parse command line options
     source $LIB_PATH/cmdOptions.sh
     # Adds the base logging features
     source $LIB_PATH/colorLogging.sh
@@ -63,7 +63,7 @@ if [[ " ${LOADED_LIB[*]} " != *" checkCpuFreq.sh "* ]]; then
 			local FREQ_FILE="${BASE_CPU_FREQ_DIR}/cpu${CPU}/cpufreq/cpuinfo_cur_freq"
 			if [ ! -r ${FREQ_FILE} ]
 			then
-				log "You can not read the frequency file so skiping it" $INFO $RED_TEXT
+				log "You can not read the frequency file so skiping it" $INFO $TEXT_RED
 				continue
 			fi	
 			local FREQ=$(cat "$FREQ_FILE")			  		
