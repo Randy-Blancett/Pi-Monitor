@@ -1,20 +1,25 @@
 #!/bin/bash
 #FILE
 # This will process Cpu Usage
-#VERSION 0.0.1
+#VERSION 1.1.0
 #VERSIONS
-#V 0.0.1
+#V 1.1.0
+# Fix ShellCheck Issues
+# Add Test code
+#
+#V 1.0.0
 # Initial Split of code to handle CPU Usage
 
 if [[ " ${LOADED_LIB[*]} " != *" checkCpuUsage.sh "* ]]; then
     LOADED_LIB+=('checkCpuUsage.sh')
+    [[ "${BASH_SOURCE[0]}" == "${0}" ]] && LIB_PATH="$( dirname "$0" )" && LIB_PATH=$(readlink -e "$LIB_PATH")
     
      # Allow the library to parse command line options
-    source $LIB_PATH/cmdOptions.sh
+    source "$LIB_PATH/cmdOptions.sh"
     # Adds the base logging features
-    source $LIB_PATH/colorLogging.sh
+    source "$LIB_PATH/colorLogging.sh"
 	# Adds ability to output data in a zabbix file
-	source $LIB_PATH/outputZabbixFile.sh
+	source "$LIB_PATH/outputZabbixFile.sh"
 	
 	#VARIABLE
     #PROTECTED
@@ -49,10 +54,10 @@ if [[ " ${LOADED_LIB[*]} " != *" checkCpuUsage.sh "* ]]; then
 	# $1 | Date | Date in seconds since epoc
 	function checkCpuUsage()
 	{
-		skipCheck "CPU Usage" $CPU_USAGE_ENABLED $CPU_USAGE_LAST_CHECK $CPU_USAGE_CYCLE $1 && \
+		skipCheck "CPU Usage" "$CPU_USAGE_ENABLED" "$CPU_USAGE_LAST_CHECK" "$CPU_USAGE_CYCLE" "$1" && \
 		return 0
 				
-		log "Reading from ${CPU_STATUS}" $DEBUG $YELLOW_TEXT
+		log "Reading from ${BASE_CPU_USAGE_FILE}" "$DEBUG" "$TEXT_YELLOW"
 		
 		CPU_USAGE_LAST_CHECK=$1	
 		local CPU_LINES=();
@@ -85,39 +90,41 @@ if [[ " ${LOADED_LIB[*]} " != *" checkCpuUsage.sh "* ]]; then
 	# $3 | New Data | The data for one cpu this run
 	function processSingleCpuData()
 	{
-		log "Processing One cpu [$2] [$3]" $TRACE $TEXT_YELLOW
+		log "Processing One cpu [$2] [$3]" "$TRACE" "$TEXT_YELLOW"
 		[ -z "$2" ] && \
 			log "There is no old data so we can not process." "$INFO" "$TEXT_YELLOW" && \
 			return
-		local OLD_DATA=($2)
-		local NEW_DATA=($3)
+		local OLD_DATA		
+	 	readarray -t -d " " OLD_DATA <<<"$2 "
+		local NEW_DATA
+	 	readarray -t -d " " NEW_DATA <<<"$3 "
 		local DELTA_DATA=()
-		local NAME=${OLD_DATA[0]}
+		local NAME="${OLD_DATA[0]}"
 		local TOTAL=0
 		
 		local I=-1
-		for OLD in ${OLD_DATA[@]}
+		for OLD in "${OLD_DATA[@]}"
 		do	
 	  		((I+=1))
-	  		if [ $I -eq 0 ]
+	  		if [ "$I" -eq 0 ]
 	  		then
 	  			DELTA_DATA[$I]=""
 	  			continue
 	  		fi
-	  		DELTA_DATA[$I]=$((NEW_DATA[$I]- OLD_DATA[$I]))
-	  		((TOTAL+=DELTA_DATA[$I]))
+	  		DELTA_DATA[$I]=$((NEW_DATA[I]- OLD_DATA[I]))
+	  		((TOTAL+=DELTA_DATA[I]))
 		done
 		
-		sendCpuMetric $1 "$NAME" "user" "${DELTA_DATA[1]}" "$TOTAL"
-		sendCpuMetric $1 "$NAME" "nice" "${DELTA_DATA[2]}" "$TOTAL"
-		sendCpuMetric $1 "$NAME" "system" "${DELTA_DATA[3]}" "$TOTAL"
-		sendCpuMetric $1 "$NAME" "idle" "${DELTA_DATA[4]}" "$TOTAL"
-		sendCpuMetric $1 "$NAME" "iowait" "${DELTA_DATA[5]}" "$TOTAL"
-		sendCpuMetric $1 "$NAME" "irq" "${DELTA_DATA[6]}" "$TOTAL"
-		sendCpuMetric $1 "$NAME" "softirq" "${DELTA_DATA[7]}" "$TOTAL"
-		sendCpuMetric $1 "$NAME" "steal" "${DELTA_DATA[8]}" "$TOTAL"
-		sendCpuMetric $1 "$NAME" "guest" "${DELTA_DATA[9]}" "$TOTAL"
-		sendCpuMetric $1 "$NAME" "totalUsed" "$((TOTAL- DELTA_DATA[4]))" "$TOTAL"
+		sendCpuMetric "$1" "$NAME" "user" "${DELTA_DATA[1]}" "$TOTAL"
+		sendCpuMetric "$1" "$NAME" "nice" "${DELTA_DATA[2]}" "$TOTAL"
+		sendCpuMetric "$1" "$NAME" "system" "${DELTA_DATA[3]}" "$TOTAL"
+		sendCpuMetric "$1" "$NAME" "idle" "${DELTA_DATA[4]}" "$TOTAL"
+		sendCpuMetric "$1" "$NAME" "iowait" "${DELTA_DATA[5]}" "$TOTAL"
+		sendCpuMetric "$1" "$NAME" "irq" "${DELTA_DATA[6]}" "$TOTAL"
+		sendCpuMetric "$1" "$NAME" "softirq" "${DELTA_DATA[7]}" "$TOTAL"
+		sendCpuMetric "$1" "$NAME" "steal" "${DELTA_DATA[8]}" "$TOTAL"
+		sendCpuMetric "$1" "$NAME" "guest" "${DELTA_DATA[9]}" "$TOTAL"
+		sendCpuMetric "$1" "$NAME" "totalUsed" "$((TOTAL- DELTA_DATA[4]))" "$TOTAL"
 	}
 	
 	#METHOD
@@ -133,8 +140,9 @@ if [[ " ${LOADED_LIB[*]} " != *" checkCpuUsage.sh "* ]]; then
 	
 	function sendCpuMetric()
 	{
-		local USAGE=$(echo "scale=2; 100*$4/$5" | bc -l)
-	  	sendZabbixLine2Cache $1 $2.usage.$3 $USAGE 
+		local USAGE
+		USAGE=$(echo "scale=2; 100*$4/$5" | bc -l)
+	  	sendZabbixLine2Cache "$1" "$2.usage.$3" "$USAGE" 
 	}
 	
 	#METHOD
@@ -171,4 +179,27 @@ if [[ " ${LOADED_LIB[*]} " != *" checkCpuUsage.sh "* ]]; then
 	addCommandLineArg "" "cpuUsageCycle" true "This is the number of seconds to wait between checking CPU Usage Default: $CPU_USAGE_CYCLE"
 	
 	addCommandLineParser "optCheckCpuUsage"
+    
+    ##############################################################
+    # Testing Process                                            #
+    ##############################################################    
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
+    then
+     log "${BASH_SOURCE[0]} is being run directly, this is only intened for Testing" "$STANDARD" "$TEXT_BLUE"
+     parseCmdLine "$@"
+	 varDump "$DEBUG"
+	 DATE=$(date +"%d%B%Y_%H %s ")
+	 readarray -t -d " " DATE_ARRAY <<<"$DATE"
+  	 DATE=${DATE_ARRAY[1]}  	 
+     checkCpuUsage "$DATE"   
+       
+  	 sleep "$CPU_USAGE_CYCLE"   
+  	 	 
+	 DATE=$(date +"%d%B%Y_%H %s ")
+	 readarray -t -d " " DATE_ARRAY <<<"$DATE"
+  	 DATE=${DATE_ARRAY[1]}  	 
+     checkCpuUsage "$DATE" 
+      
+     printZabbixCache
+    fi
 fi

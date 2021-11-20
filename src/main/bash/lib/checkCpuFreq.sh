@@ -1,20 +1,23 @@
 #!/bin/bash
 #FILE
 # This will process Cpu Frequency
-#VERSION 0.0.1
+#VERSION 1.1.0
 #VERSIONS
-#V 0.0.1
+#V 1.1.0
+# Fix ShellCheck Issues
+#
+#V 1.0.0
 # Initial Split of code to handle CPU Freq
 
 if [[ " ${LOADED_LIB[*]} " != *" checkCpuFreq.sh "* ]]; then
     LOADED_LIB+=('checkCpufreq.sh')
     
     # Allow the library to parse command line options
-    source $LIB_PATH/cmdOptions.sh
+    source "$LIB_PATH/cmdOptions.sh"
     # Adds the base logging features
-    source $LIB_PATH/colorLogging.sh
+    source "$LIB_PATH/colorLogging.sh"
 	# Adds ability to output data in a zabbix file
-	source $LIB_PATH/outputZabbixFile.sh
+	source "$LIB_PATH/outputZabbixFile.sh"
 	
 	#VARIABLE
     #PROTECTED
@@ -54,20 +57,21 @@ if [[ " ${LOADED_LIB[*]} " != *" checkCpuFreq.sh "* ]]; then
 	# $1 | Date | Date in seconds since epoc
 	function checkCpuFreq()
 	{
-		skipCheck "CPU Freqency" $CPU_FREQ_ENABLED $CPU_FREQ_LAST_CHECK $CPU_FREQ_CYCLE $1 && \
+		skipCheck "CPU Freqency" "$CPU_FREQ_ENABLED" "$CPU_FREQ_LAST_CHECK" "$CPU_FREQ_CYCLE" "$1" && \
 		return 0
 		
 		for CPU in ${CPUS}
 		do
-			log "Process $CPU" $TRACE	
+			log "Process $CPU" "$TRACE"	"$TEXT_BLUE"
 			local FREQ_FILE="${BASE_CPU_FREQ_DIR}/cpu${CPU}/cpufreq/cpuinfo_cur_freq"
-			if [ ! -r ${FREQ_FILE} ]
+			if [ ! -r "${FREQ_FILE}" ]
 			then
-				log "You can not read the frequency file so skiping it" $INFO $TEXT_RED
+				log "You can not read the frequency file so skiping it" "$INFO" "$TEXT_RED"
 				continue
 			fi	
-			local FREQ=$(cat "$FREQ_FILE")			  		
-	  		sendZabbixLine2Cache $1 "${KEY_CPU_FREQ}${CPU}" $FREQ 
+			local FREQ
+			FREQ=$(cat "$FREQ_FILE")			  		
+	  		sendZabbixLine2Cache "$1" "${KEY_CPU_FREQ}${CPU}" "$FREQ" 
 		done
 	}
 	

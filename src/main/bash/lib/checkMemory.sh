@@ -9,14 +9,14 @@
 if [[ " ${LOADED_LIB[*]} " != *" checkMemory.sh "* ]]; then
     LOADED_LIB+=('checkMemory.sh')
     
-    [[ "${BASH_SOURCE[0]}" == "${0}" ]] && LIB_PATH="$( dirname $0 )" && LIB_PATH=$(readlink -e $LIB_PATH)
+    [[ "${BASH_SOURCE[0]}" == "${0}" ]] && LIB_PATH="$( dirname "$0" )" && LIB_PATH=$(readlink -e "$LIB_PATH")
     
     # Allow the library to parse command line options
-    source $LIB_PATH/cmdOptions.sh
+    source "$LIB_PATH/cmdOptions.sh"
     # Adds the base logging features
-    source $LIB_PATH/colorLogging.sh
+    source "$LIB_PATH/colorLogging.sh"
 	# Adds ability to output data in a zabbix file
-	source $LIB_PATH/outputZabbixFile.sh
+	source "$LIB_PATH/outputZabbixFile.sh"
 	
 	#VARIABLE
     #PROTECTED
@@ -49,7 +49,7 @@ if [[ " ${LOADED_LIB[*]} " != *" checkMemory.sh "* ]]; then
 		skipCheck "Memory Usage" "$MEMORY_ENABLED" "$MEMORY_LAST_CHECK" "$MEMORY_CYCLE" "$1" && \
 		return 0
 				
-		log "Reading from ${CPU_STATUS}" $DEBUG $YELLOW_TEXT
+		log "Reading from ${CPU_STATUS}" "$DEBUG" "$TEXT_YELLOW"
 		
 		CPU_USAGE_LAST_CHECK=$1	
 		local CPU_LINES=();
@@ -59,7 +59,7 @@ if [[ " ${LOADED_LIB[*]} " != *" checkMemory.sh "* ]]; then
 	  		((I+=1))
 	  		processSingleCpuData "$1" "${OLD_CPU_READINGS[${I}]}" "$CPU"
 	  		OLD_CPU_READINGS[${I}]="$CPU"
-	  	done < <(grep cpu ${BASE_CPU_USAGE_FILE})
+	  	done < <(grep cpu "${BASE_CPU_USAGE_FILE}")
 	}
 	
 	#METHOD
@@ -104,6 +104,6 @@ if [[ " ${LOADED_LIB[*]} " != *" checkMemory.sh "* ]]; then
     then
      log "${BASH_SOURCE[0]} is being run directly, this is only intened for Testing" "$STANDARD" "$TEXT_BLUE"
      parseCmdLine "$@"
-	 varDump $DEBUG	 
+	 varDump "$DEBUG"	 
     fi
  fi

@@ -1,13 +1,16 @@
 #!/bin/bash
 #FILE
 # This is the entry point for the monitoring of the orange pi dameon
-#VERSION 0.0.1
+#VERSION 1.1.0
 #VERSIONS
-#V 0.0.1
+#V 1.1.0
+# Fix ShellCheck Issues
+#
+#V 1.0.0
 # Initial Split of code into more manageable chunks
 
-BL_PATH="$( dirname $0 )"
-BL_PATH=$(readlink -e $BL_PATH)
+BL_PATH="$( dirname "$0" )"
+BL_PATH=$(readlink -e "$BL_PATH")
 LIB_PATH="$BL_PATH/lib"
 
 #VARIABLE
@@ -22,17 +25,17 @@ CYCLE_TIME_MIN=3
 function loadRequirements()
 {
 	# Adds ability to log data in color
-	source $LIB_PATH/colorLogging.sh
+	source "$LIB_PATH/colorLogging.sh"
 	# Adds ability to output data in a zabbix file
-	source $LIB_PATH/outputZabbixFile.sh
+	source "$LIB_PATH/outputZabbixFile.sh"
 	# Adds ability monitor Gpu Temp
-	source $LIB_PATH/checkGpuTemp.sh
+	source "$LIB_PATH/checkGpuTemp.sh"
 	# Adds ability monitor Cpu Temp
-	source $LIB_PATH/checkCpuTemp.sh
+	source "$LIB_PATH/checkCpuTemp.sh"
 	# Adds ability monitor Cpu Freq
-	source $LIB_PATH/checkCpuFreq.sh
+	source "$LIB_PATH/checkCpuFreq.sh"
 	# Adds ability monitor Cpu Usage
-	source $LIB_PATH/checkCpuUsage.sh
+	source "$LIB_PATH/checkCpuUsage.sh"
 }
 
 #METHOD
@@ -59,10 +62,10 @@ function optMonitorDameon()
 # $1 | Directory | Directory to Check
 function ensureDir
 {
-	log "Ensure that Directory $1 exists" $INFO $TEXT_GREEN
-	if [ ! -d “$1” ]; then
-		log "$1 does not exist atempting to create." $DEBUG $TEXT_YELLOW
-  		mkdir -p $1
+	log "Ensure that Directory $1 exists" "$INFO" "$TEXT_GREEN"
+	if [ ! -d "$1" ]; then
+		log "$1 does not exist atempting to create." "$DEBUG" "$TEXT_YELLOW"
+  		mkdir -p "$1"
 	fi
 }
 
@@ -82,21 +85,22 @@ addCommandLineArg "c" "minCycle" true "The minimum sleep cycle betwee runs Defau
 addCommandLineParser "optMonitorDameon"
 
 parseCmdLine "$@"
-varDump $DEBUG
+varDump "$DEBUG"
 
-ensureDir $OUTPUT_DIR
+ensureDir "$OUTPUT_DIR"
 
 log "Starting Monitor Dameon..." "$STANDARD" "$TEXT_GREEN"
 
 while true
 do
-  DATE_ARRAY=($(date +"%d%B%Y_%H %s"))
+  DATE=$(date +"%d%B%Y_%H %s ")
+  readarray -t -d " " DATE_ARRAY <<<"$DATE"
   OUTPUT_FILE=$OUTPUT_DIR/${DATE_ARRAY[0]}
-  DATE=${DATE_ARRAY[1]}
-  checkCpuTemp $DATE
-  checkGpuTemp $DATE
-  checkCpuFreq $DATE
-  checkCpuUsage $DATE
+  DATE=${DATE_ARRAY[1]}  
+  checkCpuTemp "$DATE"
+  checkGpuTemp "$DATE"
+  checkCpuFreq "$DATE"
+  checkCpuUsage "$DATE"
   writeZabbixCache
-  sleep $CYCLE_TIME_MIN
+  sleep "$CYCLE_TIME_MIN"
 done
