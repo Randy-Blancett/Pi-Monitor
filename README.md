@@ -14,6 +14,11 @@ it will ask you where to save the zabbix file
    
 ## Versions
 
+### 1.1.0
+#### Features
+* Add ability to track Memory
+#### Bugs
+
 ### 1.0.0
 #### Features
 Initial release
