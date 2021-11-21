@@ -38,6 +38,36 @@ if [[ " ${LOADED_LIB[*]} " != *" checkMemory.sh "* ]]; then
 	# This holds the last time the Memory check was run.
 	MEMORY_LAST_CHECK=0;
 	
+	#VARIABLE
+	#PRIVATE
+	# This holds the Key for outputing memory total
+	KEY_MEMORY_TOTAL="memory.total"
+	
+	#VARIABLE
+	#PRIVATE
+	# This holds the Key for outputing memory used
+	KEY_MEMORY_USED="memory.used"
+	
+	#VARIABLE
+	#PRIVATE
+	# This holds the Key for outputing memory free
+	KEY_MEMORY_FREE="memory.free"
+	
+	#VARIABLE
+	#PRIVATE
+	# This holds the Key for outputing Swap memory free
+	KEY_MEMORY_SWAP_FREE="memory.swap.free"
+	
+	#VARIABLE
+	#PRIVATE
+	# This holds the Key for outputing Swap memory used
+	KEY_MEMORY_SWAP_USED="memory.swap.used"
+	
+	#VARIABLE
+	#PRIVATE
+	# This holds the Key for outputing Swap memory total
+	KEY_MEMORY_SWAP_TOTAL="memory.swap.total"
+	
 	#METHOD
 	#PUBLIC
 	# Process One line of the Memory Stats File
@@ -83,7 +113,18 @@ if [[ " ${LOADED_LIB[*]} " != *" checkMemory.sh "* ]]; then
 	  	while read -r STAT; do
 		  processMemoryStatLine "$1" "$STAT" MEMORY_STATS
 		done <"${MEMORY_STAT_FILE}"
-		for i in "${!MEMORY_STATS[@]}";do printf "%s=%s\n" "$i" "${MEMORY_STATS[$i]}";done
+		
+		local MEM_USED
+		MEM_USED=$((MEMORY_STATS["MemTotal"] - MEMORY_STATS["MemFree"] - MEMORY_STATS["Buffers"] - MEMORY_STATS["Cached"] - MEMORY_STATS["Slab"] ))
+		local MEM_SWAP_USED
+		MEM_SWAP_USED=$((MEMORY_STATS["SwapTotal"] - MEMORY_STATS["SwapFree"] ))
+					
+	  	sendZabbixLine2Cache "$1" "$KEY_MEMORY_TOTAL" "$((MEMORY_STATS["MemTotal"] * 1000 ))" 
+	  	sendZabbixLine2Cache "$1" "$KEY_MEMORY_FREE" "$((MEMORY_STATS["MemFree"] * 1000 ))" 
+	  	sendZabbixLine2Cache "$1" "$KEY_MEMORY_USED" "$((MEM_USED * 1000 ))" 
+	  	sendZabbixLine2Cache "$1" "$KEY_MEMORY_SWAP_FREE" "$((MEMORY_STATS["SwapFree"] * 1000 ))" 
+	  	sendZabbixLine2Cache "$1" "$KEY_MEMORY_SWAP_TOTAL" "$((MEMORY_STATS["SwapTotal"] * 1000 ))" 
+	  	sendZabbixLine2Cache "$1" "$KEY_MEMORY_SWAP_USED" "$((MEM_SWAP_USED * 1000 ))" 
 	}
 	
 	#METHOD
@@ -115,6 +156,12 @@ if [[ " ${LOADED_LIB[*]} " != *" checkMemory.sh "* ]]; then
     addVar2Dump "MEMORY_ENABLED" 
     addVar2Dump "MEMORY_CYCLE" 
     addVar2Dump "MEMORY_LAST_CHECK" 
+    addVar2Dump "KEY_MEMORY_TOTAL"
+    addVar2Dump "KEY_MEMORY_USED"
+    addVar2Dump "KEY_MEMORY_FREE"
+    addVar2Dump "KEY_MEMORY_SWAP_FREE"
+    addVar2Dump "KEY_MEMORY_SWAP_USED"
+    addVar2Dump "KEY_MEMORY_SWAP_TOTAL"
     
     addCommandLineArg "" "memoryStatFile" true "This is the file where memory stats can be found Default: $MEMORY_STAT_FILE"
 	addCommandLineArg "" "memoryEnabled" true "0 = don't outout Memory 1 = output Memory Default: $MEMORY_ENABLED"
@@ -130,5 +177,6 @@ if [[ " ${LOADED_LIB[*]} " != *" checkMemory.sh "* ]]; then
      parseCmdLine "$@"
 	 varDump "$DEBUG"	
 	 checkMemoryUsage "$(date +"%s")" 
+     printZabbixCache
     fi
  fi

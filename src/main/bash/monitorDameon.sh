@@ -5,6 +5,7 @@
 #VERSIONS
 #V 1.1.0
 # Fix ShellCheck Issues
+# Added Checking of Memory
 #
 #V 1.0.0
 # Initial Split of code into more manageable chunks
@@ -36,6 +37,8 @@ function loadRequirements()
 	source "$LIB_PATH/checkCpuFreq.sh"
 	# Adds ability monitor Cpu Usage
 	source "$LIB_PATH/checkCpuUsage.sh"
+	# Adds ability monitor Memory Usage
+	source "$LIB_PATH/checkMemory.sh"
 }
 
 #METHOD
@@ -101,6 +104,7 @@ do
   checkGpuTemp "$DATE"
   checkCpuFreq "$DATE"
   checkCpuUsage "$DATE"
+  checkMemoryUsage "$DATE"
   writeZabbixCache
   sleep "$CYCLE_TIME_MIN"
 done
